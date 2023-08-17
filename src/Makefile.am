@@ -1,9 +1,12 @@
-bin_PROGRAMS = iYDLegacy
+bin_PROGRAMS = iVKLegacy
 iVKLegacy_SOURCES = \
 		cVK.h oauth.c http.c \
 		uuid4.c \
 		cJSON.c \
-		AppDelegate.m \
+		AppDelegate.h AppDelegate.m \
+		RootViewController.h RootViewController.m \
+		VKFeedViewController.h VKFeedViewController.m \
+		VKConnect.h VKConnect.m \
 		main.m
 
 iVKLegacy_CFLAGS = \
@@ -27,7 +30,7 @@ _plist:
 
 _images:
 	cp -f ../images/AppIcon*.png iVKLegacy.app/.
-	cp -f ../images/Directory*.png iVKLegacy.app/.
+	cp -f ../images/menu*.png iVKLegacy.app/.
 
 iVKLegacy.app: iVKLegacy _dir _plist _images
 	cp -f iVKLegacy iVKLegacy.app/. 

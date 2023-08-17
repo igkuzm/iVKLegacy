@@ -2,7 +2,7 @@
  * File              : cVK.h
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 11.08.2023
- * Last Modified Date: 16.08.2023
+ * Last Modified Date: 17.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -15,11 +15,8 @@ extern "C" {
 
 #include <stdint.h>
 #include "cJSON.h"
+#include "config.h"
 	
-
-#define  VK_API       "5.131"
-#define  VERIFY_SSL   0
-#define  DEFAULT_PORT 2000
 /*
  * To create new application visit https://vk.com/apps
  * Set Open API ON, basic domen to localhost
@@ -73,10 +70,23 @@ char * c_vk_auth_url(
 		const char *client_id,
 		uint32_t access_rights //https://dev.vk.com/references/access-rights
 		);
+char * c_vk_auth_url2(
+		const char *client_id,
+		uint32_t access_rights //https://dev.vk.com/references/access-rights
+		);
+char * c_vk_listner(
+		void * user_data,
+		void (*callback)(
+			void * user_data,
+			const char * access_token,
+			int expires_in,
+			const char * user_id,
+			const char * error)
+		);
 
 /* launch listner on DEFAULT_PORT to catch authorization code
  * and change it to token. */
-void c_vk_get_token(
+void c_vk_auth_token(
 		const char *client_id,         // get in https://vk.com/apps
 		const char *client_secret,     // get in https://vk.com/apps
 		void * user_data,

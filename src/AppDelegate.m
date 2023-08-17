@@ -2,7 +2,7 @@
  * File              : AppDelegate.m
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 09.08.2023
- * Last Modified Date: 10.08.2023
+ * Last Modified Date: 17.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -10,9 +10,6 @@
 #include "Foundation/Foundation.h"
 #include "UIKit/UIKit.h"
 #include "RootViewController.h"
-
-#define CLIENTID "e6018bd0ccda4ea5b1db3c612a8db314"
-#define CLIENTSECRET "b4eb1d22066145d094c6b0bd7a2a27f6"
 
 @implementation AppDelegate
 
@@ -23,10 +20,8 @@
 	//if ([[NSUserDefaults standardUserDefaults] valueForKey:@"launchBool"]){
 		//[self handleWithURL:self.url onWindow:self.window];
 	//} else {
-		//YandexDiskConnect *yc = 
-			//[[YandexDiskConnect alloc]initWithFrame:self.window.frame];
 		RootViewController *vc = 
-			[[RootViewController alloc]init];
+				[[RootViewController alloc]initWithStyle:UITableViewStyleGrouped];
 		UINavigationController *nc = 
 			[[UINavigationController alloc]initWithRootViewController:vc];
 		[self.window setRootViewController:nc];
@@ -37,9 +32,25 @@
 }
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+	if ([url.host isEqualToString:@"authorize"]){
+		NSString *fragment = url.fragment;
+		NSArray *array = [fragment componentsSeparatedByString:@"&"];
+		for (NSString *item in array) {
+			NSArray *pair = [item componentsSeparatedByString:@"="];
+			NSString *key = [pair objectAtIndex:0];
+			NSString *value = [pair objectAtIndex:1];
+			[[NSUserDefaults standardUserDefaults]setValue:value forKey:key];
+		}
+		UIAlertView *alert = 
+					[[UIAlertView alloc]initWithTitle:@"response" 
+					message:fragment
+					delegate:nil 
+					cancelButtonTitle:@"Закрыть" 
+					otherButtonTitles:nil];
+		[alert show];
+	}
 	return true;
 }
-
 
 @end
 // vim:ft=objc
