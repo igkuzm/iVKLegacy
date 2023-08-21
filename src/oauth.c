@@ -2,7 +2,7 @@
  * File              : oauth.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 11.08.2023
- * Last Modified Date: 17.08.2023
+ * Last Modified Date: 21.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -31,14 +31,14 @@ char * c_vk_auth_url(
 		return NULL;
 	}
 	sprintf(s, 
-			"%s?client_id=%s&display=mobile&"
-			"redirect_uri=http://localhost:%d&scope=%d&v=%s", 
-			OAUTH_URL, client_id, DEFAULT_PORT, access_rights, VK_API);	
+			"%s?client_id=%s&response_type=token&"
+			"redirect_uri=vk%s://authorize&scope=%d&v=%s", 
+			OAUTH_URL, client_id, client_id, access_rights, VK_API);	
 	
 	return s;
 }
 
-char * c_vk_auth_url2(
+char * c_vk_auth_code_url(
 		const char *client_id,  
 		uint32_t access_rights) //https://dev.vk.com/references/access-rights
 {
@@ -48,17 +48,14 @@ char * c_vk_auth_url2(
 		return NULL;
 	}
 	sprintf(s, 
-			//"%s?client_id=%s&display=mobile&response_type=token&"
-			"%s?client_id=%s&display=mobile&response_type=token&"
-			//"redirect_uri=https://oauth.vk.com/blank.html&scope=%d&v=%s", 
-			"redirect_uri=vk51726951://authorize&scope=%d&v=%s", 
-			OAUTH_URL, client_id, access_rights, VK_API);	
+			"%s?client_id=%s&"
+			"redirect_uri=http://localhost:%d&scope=%d&v=%s", 
+			OAUTH_URL, client_id, DEFAULT_PORT, access_rights, VK_API);	
 	
 	return s;
 }
 
-
-char * c_vk_listner(
+static char * c_vk_listner(
 		void * user_data,
 		void (*callback)(
 			void * user_data,
