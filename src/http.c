@@ -2,11 +2,13 @@
  * File              : http.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 13.08.2023
- * Last Modified Date: 16.08.2023
+ * Last Modified Date: 21.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
+#include "cJSON.h"
 #include "cVK.h"
+#include "config.h"
 #include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,17 +49,15 @@ size_t writefunc(void *ptr, size_t size,
 
 int c_vk_run_method(
 		const char *token,
-		cJSON *content,
+		const char *body,
 		void *user_data, 
-		void (*callback)(void *user_data, const cJSON *response, const char *error),
+		void (*callback)(void *user_data, const char *response_json, const char *error),
 		const char *method, ...)
 {
 	const char * http_method = "GET";
-	char *body = NULL;    // content string
 	size_t body_len = 0;  // content length
 	
-	if (content){
-		body = cJSON_Print(content);
+	if (body){
 		body_len = strlen(body);
 		http_method = "POST";
 	}
@@ -78,23 +78,16 @@ int c_vk_run_method(
 	}
 		
 	char requestString[BUFSIZ];	
-	sprintf(requestString, "%s%s", API_URL, method);
+	sprintf(requestString, "%s%s?v=%s", API_URL, method, VK_API);
 	va_list argv;
 	va_start(argv, method);
 	const char *arg = va_arg(argv, const char*);
-	if (arg) {
-		sprintf(requestString, "%s?%s", requestString, arg);
-		arg = va_arg(argv, const char*);	
-	}
 	while (arg) {
 		sprintf(requestString, "%s&%s", requestString, arg);
 		arg = va_arg(argv, const char*);	
 	}
 	va_end(argv);
-
-	// vk api version
-	sprintf(requestString, "%s&v=%s", requestString, VK_API);
-	printf("REQUEST: %s\n", requestString);
+	//printf("REQUEST: %s\n", requestString);
 
 	curl_easy_setopt(curl, CURLOPT_URL, requestString);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, http_method);		
@@ -135,10 +128,10 @@ int c_vk_run_method(
 	cJSON *json = cJSON_ParseWithLength(s.ptr, s.len);
 	if (json){
 		cJSON *responce =
-			cJSON_GetObjectItem(json, "responce");
+			cJSON_GetObjectItem(json, "response");
 		if (responce){
 			if (callback)
-				callback(user_data, responce, NULL);
+				callback(user_data, cJSON_Print(responce), NULL);
 			cJSON_free(json);
 			free(s.ptr);		
 			return 0;
@@ -153,6 +146,11 @@ int c_vk_run_method(
 					if (callback)
 						callback(user_data, NULL, msg->valuestring);
 				}
+			} else {
+				char msg[BUFSIZ];
+				snprintf(msg, BUFSIZ-1, "Error. Server retuned: %s", cJSON_Print(json));
+				if (callback)
+					callback(user_data, NULL, msg);
 			}
 		}
 		cJSON_free(json);
