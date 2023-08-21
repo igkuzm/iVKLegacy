@@ -2,11 +2,13 @@
  * File              : VKFeedViewController.m
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.08.2023
- * Last Modified Date: 17.08.2023
+ * Last Modified Date: 18.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
 #import "VKFeedViewController.h"
+#include "CoreGraphics/CoreGraphics.h"
+#include "URLImageView.h"
 #include <stdio.h>
 #include "Foundation/Foundation.h"
 #include "cJSON.h"
@@ -16,6 +18,7 @@
 @interface VKFeed : NSObject
 @property (strong) NSString *text;
 @property (strong) NSURL *image;
+@property (strong) NSData *imageData;
 @end
 
 @implementation VKFeed
@@ -24,11 +27,40 @@
 	if (self = [super init]) {
 		self.text = nil;
 		self.image = nil;
+		self.imageData = nil;
 	}
 	return self;
 }
-
 @end
+
+@interface VKFeedView : UITableViewCell
+<URLImageViewDelegate>
+@property (strong) URLImageView *feedImageView;
+@property (strong) UITextView *textView;
+@property (strong) VKFeed *feed;
+@end
+
+@implementation VKFeedView
+- (id)initWithFrame:(CGRect)frame feed:(VKFeed *)feed{
+	if (self = [super init]) {
+		CGRect imageFrame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+		self.feedImageView = [[URLImageView alloc]initWithFrame:imageFrame url:feed.image];	
+		[self.contentView addSubview:self.feedImageView];
+		self.feedImageView.delegate = self;
+
+		CGRect textFrame = CGRectMake(0, 0, frame.size.width, 20);
+		self.textView = [[UITextView alloc]initWithFrame:frame];
+		[self.textView setText:feed.text];
+		//[self.contentView addSubview:self.textView];
+	}
+	return self;
+}
+- (void)imageDidFinishLoading:(id)imageView {
+	self.feed.imageData = ((URLImageView *)imageView).mutableData;	
+}
+@end
+
+
 
 @implementation VKFeedViewController
 
@@ -94,12 +126,13 @@ void callback(void *data, const char *response, const char *error){
 		VKFeedViewController *self = data;
 		// free data
 		[self.loadedData removeAllObjects];
-
-		NSString *str = [NSString stringWithUTF8String:response];
-		NSData  *data = [str dataUsingEncoding:NSUTF8StringEncoding];	
+		
+		// parse json
+		NSData *data = [NSData dataWithBytes:response length:strlen(response)];
 		NSError *error = nil;
 		NSDictionary *dict = 
-			[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+			[NSJSONSerialization JSONObjectWithData:data 
+					options:NSJSONReadingAllowFragments error:&error];
 		if (error){
 			NSLog(@"%@", error);
 			UIAlertView *alert = 
@@ -125,7 +158,7 @@ void callback(void *data, const char *response, const char *error){
 					if (photo){
 						NSArray *sizes = [photo valueForKey:@"sizes"];
 						if (sizes){
-							NSString *url = [(NSDictionary *)[sizes objectAtIndex:0]valueForKey:@"url"];
+							NSString *url = [(NSDictionary *)[sizes objectAtIndex:sizes.count - 1]valueForKey:@"url"];
 							feed.image = [NSURL URLWithString:url];
 						}
 					}
@@ -211,16 +244,23 @@ void callback(void *data, const char *response, const char *error){
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 	VKFeed *feed = [self.data objectAtIndex:indexPath.item];
-	UITableViewCell *cell = nil;
+	CGRect frame = CGRectMake(0, 0, 300, 200);
+	NSString *ident = [NSString stringWithFormat:@"cell %ld", indexPath.item];
+	//UITableViewCell *cell = [[VKFeedView alloc]initWithFrame:frame feed:feed];
+	VKFeedView * cell;// = [self.tableView dequeueReusableCellWithIdentifier:ident];
+	//if (cell == nil){
+		cell = [[VKFeedView alloc]initWithFrame:frame feed:feed];
+		//[tableView registerClass:VKFeedView.class
+				//forCellReuseIdentifier:ident];
+	//}
 	//if ([file.type isEqual:@"dir"]){
-		cell = [self.tableView dequeueReusableCellWithIdentifier:@"cell"];
-		if (cell == nil){
-			cell = [[UITableViewCell alloc]
-							initWithStyle: UITableViewCellStyleDefault 
-							reuseIdentifier: @"cell"];
+		//cell = [self.tableView dequeueReusableCellWithIdentifier:ident];
+		//if (cell == nil){
+				//cell = [[VKFeedView alloc]
+		//}
+				//[cell setReuseIdentifier = @""];
 			//cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 			//cell.imageView.image = [UIImage imageNamed:@"Directory"];
-		}
 	//} else {
 		//cell = [self.tableView dequeueReusableCellWithIdentifier:@"file"];
 		//if (cell == nil){
@@ -230,22 +270,17 @@ void callback(void *data, const char *response, const char *error){
 		//}
 		////cell.detailTextLabel.text = [NSString stringWithFormat:@"%d Mb", self.selected.size/1024];
 	//}
-	if (feed.text)
-		[cell.textLabel setText:feed.text];
-	if (feed.image){
+	//if (feed.text)
+		//[cell.textLabel setText:feed.text];
+	//if (feed.image){
 		// download image
-		NSURLRequest *request = [NSURLRequest requestWithURL:feed.image];
-		NSURLConnection *conection = 
-				[[NSURLConnection alloc]initWithRequest:request delegate:self startImmediately:true];
-		UIImage *image = [UIImage imageWithData:self.mdata];
-		if (image)
-			[cell.imageView setImage:image];
-	}
+	if (feed.imageData)
+		[cell.feedImageView.imageView setImage:[UIImage imageWithData:feed.imageData]];
 	return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-	return 60;
+	return 200.0;
 }
 
 //- (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath {

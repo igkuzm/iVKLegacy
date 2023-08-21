@@ -7,6 +7,7 @@ iVKLegacy_SOURCES = \
 		RootViewController.h RootViewController.m \
 		VKFeedViewController.h VKFeedViewController.m \
 		VKConnect.h VKConnect.m \
+		URLImageView.h URLImageView.m \
 		main.m
 
 iVKLegacy_CFLAGS = \
