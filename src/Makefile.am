@@ -8,6 +8,8 @@ iVKLegacy_SOURCES = \
 		VKFeedViewController.h VKFeedViewController.m \
 		VKConnect.h VKConnect.m \
 		URLImageView.h URLImageView.m \
+		UIImageView+Network.h UIImageView+Network.m \
+		FTWCache.h FTWCache.m \
 		main.m
 
 iVKLegacy_CFLAGS = \

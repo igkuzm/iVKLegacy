@@ -2,7 +2,7 @@
  * File              : VKFeedViewController.m
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 16.08.2023
- * Last Modified Date: 18.08.2023
+ * Last Modified Date: 21.08.2023
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -14,6 +14,7 @@
 #include "cJSON.h"
 #include "cVK.h"
 #include "UIKit/UIKit.h"
+#import "UIImageView+Network.h"
 
 @interface VKFeed : NSObject
 @property (strong) NSString *text;
@@ -44,9 +45,12 @@
 - (id)initWithFrame:(CGRect)frame feed:(VKFeed *)feed{
 	if (self = [super init]) {
 		CGRect imageFrame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-		self.feedImageView = [[URLImageView alloc]initWithFrame:imageFrame url:feed.image];	
-		[self.contentView addSubview:self.feedImageView];
-		self.feedImageView.delegate = self;
+		UIImageView *iv = [[UIImageView alloc]initWithFrame:imageFrame];
+		[iv loadImageFromURL:feed.image placeholderImage:[UIImage imageNamed:@""] cachingKey:@"loading..."];
+		[self.contentView addSubview:iv];
+		//self.feedImageView = [[URLImageView alloc]initWithFrame:imageFrame url:feed.image];	
+		//[self.contentView addSubview:self.feedImageView];
+		//self.feedImageView.delegate = self;
 
 		CGRect textFrame = CGRectMake(0, 0, frame.size.width, 20);
 		self.textView = [[UITextView alloc]initWithFrame:frame];
@@ -274,8 +278,8 @@ void callback(void *data, const char *response, const char *error){
 		//[cell.textLabel setText:feed.text];
 	//if (feed.image){
 		// download image
-	if (feed.imageData)
-		[cell.feedImageView.imageView setImage:[UIImage imageWithData:feed.imageData]];
+	//if (feed.imageData)
+		//[cell.feedImageView.imageView setImage:[UIImage imageWithData:feed.imageData]];
 	return cell;
 }
 
